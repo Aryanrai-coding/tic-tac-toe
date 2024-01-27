@@ -63,6 +63,43 @@ function Player(name, symbol) {
     }
 }
 
+// check for win
+function checkWin(board, playerSymbol) {
+    for (let row = 0; row < board.length; row++) {
+        if (board[row].every(cell => cell.getSymbol() === playerSymbol)) {
+            return true;
+        }
+    }
+
+    for (let col = 0; col < board[0].length; col++) {
+        if (board.every(row => row[col].getSymbol() === playerSymbol)) {
+            return true;
+        }
+    }
+
+    if (
+        (board[0][0].getSymbol() === playerSymbol && board[1][1].getSymbol() === playerSymbol && board[2][2].getSymbol() === playerSymbol) ||
+        (board[0][2].getSymbol() === playerSymbol && board[1][1].getSymbol() === playerSymbol && board[2][0].getSymbol() === playerSymbol)
+    ) {
+        return true;
+    }
+
+    return false;
+}
+// check for tie
+
+function checkTie(board) {
+    for (let row of board) {
+        for (let cell of row) {
+            if (cell.getSymbol() === '') {
+                return false; // If any cell is empty, the game is not tied
+            }
+        }
+    }
+    return true;
+}
+
+
 function Game(playerOneName = 'Player One', playerTwoName = 'Player Two') {
 
     const board = Gameboard();
@@ -93,8 +130,18 @@ function Game(playerOneName = 'Player One', playerTwoName = 'Player Two') {
         )
 
         if (board.dropSymbol(row, column, getActivePlayer())) {
-            switchPlayerTurn();
-            printNewRound();
+
+            if (checkWin(board.getBoard(), getActivePlayer().symbol)) {
+                console.log(`Player ${getActivePlayer().name} wins!`);
+                return;
+            } else if (checkTie(board.getBoard())) {
+                console.log('It\'s a tie!');
+                return;
+            } else {
+                switchPlayerTurn();
+                printNewRound();
+            }
+
         } else {
             console.log('Invalid move. Cell already occupied.');
         }
