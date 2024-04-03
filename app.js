@@ -1,159 +1,185 @@
-// create a gameboard function returning obj inside it
-// create variables for the rows and columns of the board
-// create an empty array for the board
-// create a 2d array by looping rows and inside it looping columns
-// 
+// make an gameboard array inside the gameboard object
+// players are going to be stored in objects
+// one object to control the flow of the game
+
+
+
+
 
 function Gameboard() {
-    let rows = 3;
-    let columns = 3;
-    let board = [];
 
-    for (let i = 0; i < rows; i++) {
+    // gameboard array
+    const grid = 3;
+    const board = [];
+
+    for (let i = 0; i < grid; i++) {
         board[i] = [];
-        for (let j = 0; j < columns; j++) {
+        for (let j = 0; j < grid; j++) {
             board[i].push(Cell());
         }
     }
 
-    // get entire board 
+    // to get the board
     const getBoard = () => board;
 
 
-    // adding symbol
-    const dropSymbol = (row, column, player) => {
-        if (board[row][column].getSymbol() === '') {
-            board[row][column].addSymbol(player.symbol);
-            return true; // Valid move
+    // adding player symbol to board on selected cell
+    const addSymbol = (row, column, player) => {
+        if ((board[row][column].getValue() !== ' ')) {
+            return;
+        } else {
+            board[row][column].addValue(player);
         }
-        return false; // Invalid move, cell already occupied
     };
 
-    // print the board
+    //function to print the board to console
+
     const printBoard = () => {
-        const boardWithCellSymbol =
-            board.map((row) => row.map((cell) =>
-                cell.getSymbol()))
-        console.log(boardWithCellSymbol);
+        const cellValues = board.map((row) => row.map((cell) => cell.getValue()))
+        console.log(cellValues);
+    }
+
+
+
+    return {
+        getBoard,
+        addSymbol,
+        printBoard,
+        grid
     };
-
-    return { getBoard, dropSymbol, printBoard };
-
 }
-
 
 function Cell() {
-    let symbol = '';
+    let value = ' ';
 
-    const addSymbol = (player) => {
-        symbol = player;
-    };
+    const addValue = (player) => {
+        value = player;
+    }
 
-    const getSymbol = () => symbol;
+    const getValue = () => value;
 
     return {
-        addSymbol,
-        getSymbol
-    };
-}
-// player object for storing player name and symboln
-function Player(name, symbol) {
-    return {
-        name, symbol,
+        addValue,
+        getValue
     }
 }
 
-// check for win
-function checkWin(board, playerSymbol) {
-    for (let row = 0; row < board.length; row++) {
-        if (board[row].every(cell => cell.getSymbol() === playerSymbol)) {
-            return true;
-        }
-    }
-
-    for (let col = 0; col < board[0].length; col++) {
-        if (board.every(row => row[col].getSymbol() === playerSymbol)) {
-            return true;
-        }
-    }
-
-    if (
-        (board[0][0].getSymbol() === playerSymbol && board[1][1].getSymbol() === playerSymbol && board[2][2].getSymbol() === playerSymbol) ||
-        (board[0][2].getSymbol() === playerSymbol && board[1][1].getSymbol() === playerSymbol && board[2][0].getSymbol() === playerSymbol)
-    ) {
-        return true;
-    }
-
-    return false;
-}
-// check for tie
-
-function checkTie(board) {
-    for (let row of board) {
-        for (let cell of row) {
-            if (cell.getSymbol() === '') {
-                return false; // If any cell is empty, the game is not tied
-            }
-        }
-    }
-    return true;
-}
-
-
-function Game(playerOneName = 'Player One', playerTwoName = 'Player Two') {
+function Game() {
 
     const board = Gameboard();
 
+    // players object 
     const players = [
-        Player(playerOneName, 'X'),
-        Player(playerTwoName, 'O')
+        {
+            name: 'Player One',
+            value: 'X'
+        },
+        {
+            name: 'Player Two',
+            value: 'O'
+        }
     ];
 
     let activePlayer = players[0];
 
-    const switchPlayerTurn = () => {
-        activePlayer = activePlayer ===
-            players[0] ? players[1] : players[0];
+    // switching active players
+
+    const switchPlayersTurn = () => {
+        activePlayer = activePlayer === players[0] ? players[1] : players[0];
     };
 
+    // getting the active player
+
     const getActivePlayer = () => activePlayer;
+
+    // printing new round`
 
     const printNewRound = () => {
         board.printBoard();
 
-        console.log(`${getActivePlayer().name}'s turn.`);
-    }
+        console.log(`${getActivePlayer().name}'s turn.`)
+    };
 
+    // function to play the round
     const playRound = (row, column) => {
-        console.log(
-            `Dropping ${getActivePlayer().name}'s symbol into row ${row}, column ${column}...`
-        )
 
-        if (board.dropSymbol(row, column, getActivePlayer())) {
+        // adding the player symbol to board's cell
+        board.addSymbol(row, column, getActivePlayer().value);
 
-            if (checkWin(board.getBoard(), getActivePlayer().symbol)) {
-                console.log(`Player ${getActivePlayer().name} wins!`);
-                return;
-            } else if (checkTie(board.getBoard())) {
-                console.log('It\'s a tie!');
-                return;
-            } else {
-                switchPlayerTurn();
-                printNewRound();
+        // winning logic
+
+        const rowsMatching = () => board.getBoard().some(row => row.every(cell => cell.getValue() === getActivePlayer().value));
+
+
+        const colMatching = () => board.getBoard().every(row => row[column].getValue() === getActivePlayer().value);
+
+
+        const hasDiagonalWin = () => {
+            const boardData = board.getBoard();
+            const { grid } = board;
+            const activePlayerValue = getActivePlayer().value;
+
+            let diagonal1 = true;
+            let diagonal2 = true;
+
+            for (let i = 0; i < grid; i++) {
+                diagonal1 = diagonal1 && (boardData[i][i].getValue() === activePlayerValue);
+                diagonal2 = diagonal2 && (boardData[i][grid - 1 - i].getValue() === activePlayerValue);
+            }
+            if (diagonal1 || diagonal2) {
+                return true;
             }
 
-        } else {
-            console.log('Invalid move. Cell already occupied.');
+            return false;
         }
-    };
 
-    printNewRound();
+
+        // const checkWin = () => {
+        //     if (rowsMatching()) {
+        //         return true;
+        //     } else if (colMatching()) {
+        //         return true;
+        //     } else if (hasDiagonalWin()) {
+        //         return true;
+        //     } else {
+        //         const isBoardFull = board.getBoard().every(row => row.every(cell => cell.getValue() !== ' '))
+        //         if (isBoardFull) {
+        //             console.log('It\'s a tie')
+        //             return true;
+        //         }
+
+        //     }
+        //     return false;
+        // };
+
+        const checkWin = () => {
+            if (rowsMatching() || colMatching() || hasDiagonalWin()) {
+                return true;
+            } else {
+                const isBoardFull = board.getBoard().every(row => row.every(cell => cell.getValue() !== ' '));
+                if (isBoardFull) {
+                    console.log("It's a tie!");
+                    return false;
+                }
+            }
+            return false;
+        };
+
+        const winner = checkWin();
+        if (winner) {
+            console.log(`${getActivePlayer().name} won!`);
+        } else {
+            switchPlayersTurn();
+            printNewRound();
+        }
+
+
+    }
+
 
     return {
-        playRound,
         getActivePlayer,
-    };
+        playRound,
+    }
 }
-
 const game = Game();
-
